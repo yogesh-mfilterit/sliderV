@@ -1,82 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Human Slider Verification</title>
+<title>Slider Verify</title>
 
 <style>
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Arial,sans-serif;
-}
-
 body{
-    background:#111827;
+    margin:0;
     height:100vh;
     display:flex;
     justify-content:center;
     align-items:center;
-    color:white;
+    background:#111827;
+    font-family:Arial;
 }
 
-.container{
-    width:420px;
-    background:#1f2937;
+.wrapper{
+    width:400px;
     padding:30px;
+    background:#1f2937;
     border-radius:20px;
-    box-shadow:0 0 25px rgba(0,0,0,.5);
 }
 
-.title{
-    text-align:center;
-    margin-bottom:25px;
-    font-size:24px;
-    font-weight:bold;
-}
-
-.slider-box{
+.slider{
     position:relative;
-    width:100%;
     height:70px;
     background:#374151;
     border-radius:50px;
     overflow:hidden;
-    user-select:none;
 }
 
-.slider-fill{
+.fill{
     position:absolute;
     left:0;
     top:0;
     height:100%;
     width:0;
-    background:linear-gradient(
-        90deg,
-        #22c55e,
-        #16a34a
-    );
-    transition:width .03s linear;
+    background:#22c55e;
 }
 
-.slider-text{
+.text{
     position:absolute;
     width:100%;
     height:100%;
     display:flex;
-    justify-content:center;
     align-items:center;
-    font-size:18px;
-    color:#d1d5db;
+    justify-content:center;
+    color:white;
     z-index:2;
     pointer-events:none;
 }
 
-.slider-btn{
+.btn{
     position:absolute;
     top:5px;
     left:5px;
@@ -88,27 +66,17 @@ body{
     cursor:pointer;
 
     display:flex;
-    justify-content:center;
     align-items:center;
+    justify-content:center;
 
-    font-size:26px;
+    font-size:24px;
     font-weight:bold;
-    color:#111827;
-
-    transition:
-        background .2s,
-        transform .1s;
-}
-
-.slider-btn:active{
-    transform:scale(.95);
 }
 
 .success{
+    color:#22c55e;
     margin-top:20px;
     text-align:center;
-    color:#22c55e;
-    font-size:20px;
     display:none;
 }
 
@@ -117,39 +85,23 @@ body{
 
 <body>
 
-<div class="container">
+<div class="wrapper">
 
-    <div class="title">
-        Human Verification
-    </div>
+    <div class="slider" id="slider">
 
-    <div class="slider-box" id="sliderBox">
+        <div class="fill" id="fill"></div>
 
-        <div
-            class="slider-fill"
-            id="sliderFill"
-        ></div>
-
-        <div
-            class="slider-text"
-            id="sliderText"
-        >
+        <div class="text" id="text">
             Slide To Verify
         </div>
 
-        <div
-            class="slider-btn"
-            id="sliderBtn"
-        >
+        <div class="btn" id="btn">
             »
         </div>
 
     </div>
 
-    <div
-        class="success"
-        id="successMsg"
-    >
+    <div class="success" id="success">
         Verified Successfully ✅
     </div>
 
@@ -157,48 +109,51 @@ body{
 
 <script>
 
-// =======================================
+// =====================================
 // ELEMENTS
-// =======================================
+// =====================================
 
-const sliderBtn =
-    document.getElementById("sliderBtn");
+const slider =
+    document.getElementById("slider");
 
-const sliderBox =
-    document.getElementById("sliderBox");
+const btn =
+    document.getElementById("btn");
 
-const sliderFill =
-    document.getElementById("sliderFill");
+const fill =
+    document.getElementById("fill");
 
-const sliderText =
-    document.getElementById("sliderText");
+const text =
+    document.getElementById("text");
 
-const successMsg =
-    document.getElementById("successMsg");
+const success =
+    document.getElementById("success");
 
-// =======================================
-// VARIABLES
-// =======================================
+// =====================================
+// AUDIO SETUP
+// =====================================
 
-let isDragging = false;
-let startX = 0;
-let currentX = 0;
+let audioContext = null;
 
-const maxMove =
-    sliderBox.offsetWidth -
-    sliderBtn.offsetWidth - 10;
+function initAudio(){
 
-// =======================================
-// SOUND FUNCTION
-// =======================================
+    if(!audioContext){
 
-function playSound() {
+        audioContext =
+            new (
+                window.AudioContext ||
+                window.webkitAudioContext
+            )();
+    }
 
-    const audioContext =
-        new (
-            window.AudioContext ||
-            window.webkitAudioContext
-        )();
+    if(audioContext.state === "suspended"){
+
+        audioContext.resume();
+    }
+}
+
+function playBeep(){
+
+    if(!audioContext) return;
 
     const oscillator =
         audioContext.createOscillator();
@@ -208,17 +163,14 @@ function playSound() {
 
     oscillator.type = "sine";
 
-    oscillator.frequency.value = 220;
+    oscillator.frequency.value = 500;
+
+    gainNode.gain.value = 0.1;
 
     oscillator.connect(gainNode);
 
     gainNode.connect(
         audioContext.destination
-    );
-
-    gainNode.gain.setValueAtTime(
-        0.1,
-        audioContext.currentTime
     );
 
     oscillator.start();
@@ -228,61 +180,126 @@ function playSound() {
     );
 }
 
-// =======================================
-// VIBRATION FUNCTION
-// =======================================
+// =====================================
+// VIBRATE
+// =====================================
 
-function vibratePhone() {
+function vibrate(ms = 1000){
 
-    if ("vibrate" in navigator) {
+    if(
+        navigator.vibrate
+    ){
 
-        // vibrate for 1 second
-        navigator.vibrate(1000);
+        navigator.vibrate(ms);
 
         console.log(
-            "Vibration Triggered"
+            "vibrate:",
+            ms
         );
 
-    } else {
+    }else{
 
         console.log(
-            "Vibration Not Supported"
+            "vibration unsupported"
         );
     }
 }
 
-// =======================================
-// START DRAG
-// =======================================
+// =====================================
+// DRAG
+// =====================================
 
-sliderBtn.addEventListener(
-    "mousedown",
-    startDrag
-);
+let dragging = false;
+let startX = 0;
+let currentX = 0;
 
-sliderBtn.addEventListener(
-    "touchstart",
-    startDrag
-);
+const maxMove =
+    slider.offsetWidth -
+    btn.offsetWidth - 10;
+
+// =====================================
+// START
+// =====================================
 
 function startDrag(e){
 
-    isDragging = true;
+    dragging = true;
+
+    initAudio();
+
+    vibrate(100);
 
     startX =
         e.type.includes("mouse")
         ? e.clientX
         : e.touches[0].clientX;
-
-    // slight vibration on touch
-    if ("vibrate" in navigator) {
-        navigator.vibrate(50);
-    }
 }
 
-// =======================================
-// MOVE DRAG
-// =======================================
+btn.addEventListener(
+    "mousedown",
+    startDrag
+);
+
+btn.addEventListener(
+    "touchstart",
+    startDrag
+);
+
+// =====================================
+// MOVE
+// =====================================
+
+function moveDrag(e){
+
+    if(!dragging) return;
+
+    const clientX =
+        e.type.includes("mouse")
+        ? e.clientX
+        : e.touches[0].clientX;
+
+    currentX =
+        clientX - startX;
+
+    if(currentX < 0){
+        currentX = 0;
+    }
+
+    if(currentX > maxMove){
+        currentX = maxMove;
+    }
+
+    btn.style.left =
+        currentX + "px";
+
+    fill.style.width =
+        (currentX + 60) + "px";
+
+    // =================================
+    // SUCCESS
+    // =================================
+
+    if(currentX >= maxMove){
+
+        dragging = false;
+
+        text.innerHTML =
+            "Verified";
+
+        success.style.display =
+            "block";
+
+        btn.style.background =
+            "#22c55e";
+
+        // IMPORTANT:
+        // vibration only on success
+
+        vibrate(1000);
+
+        playBeep();
+    }
+}
 
 document.addEventListener(
     "mousemove",
@@ -294,77 +311,27 @@ document.addEventListener(
     moveDrag
 );
 
-function moveDrag(e){
+// =====================================
+// END
+// =====================================
 
-    if(!isDragging) return;
+function endDrag(){
 
-    const clientX =
-        e.type.includes("mouse")
-        ? e.clientX
-        : e.touches[0].clientX;
+    if(!dragging) return;
 
-    currentX =
-        clientX - startX;
+    dragging = false;
 
-    // ==========================
-    // LIMITS
-    // ==========================
+    if(currentX < maxMove){
 
-    if(currentX < 0){
+        btn.style.left =
+            "5px";
+
+        fill.style.width =
+            "0px";
+
         currentX = 0;
     }
-
-    if(currentX > maxMove){
-        currentX = maxMove;
-    }
-
-    // ==========================
-    // UPDATE UI
-    // ==========================
-
-    sliderBtn.style.left =
-        currentX + "px";
-
-    sliderFill.style.width =
-        (currentX + 60) + "px";
-
-    // ==========================
-    // CONTINUOUS SMALL VIBRATION
-    // ==========================
-
-    if ("vibrate" in navigator) {
-
-        navigator.vibrate(10);
-    }
-
-    // ==========================
-    // SUCCESS
-    // ==========================
-
-    if(currentX >= maxMove){
-
-        isDragging = false;
-
-        sliderText.innerHTML =
-            "Verified";
-
-        successMsg.style.display =
-            "block";
-
-        sliderBtn.style.background =
-            "#22c55e";
-
-        // success vibration
-        vibratePhone();
-
-        // sound
-        playSound();
-    }
 }
-
-// =======================================
-// END DRAG
-// =======================================
 
 document.addEventListener(
     "mouseup",
@@ -375,26 +342,6 @@ document.addEventListener(
     "touchend",
     endDrag
 );
-
-function endDrag(){
-
-    if(!isDragging) return;
-
-    isDragging = false;
-
-    // reset if incomplete
-
-    if(currentX < maxMove){
-
-        sliderBtn.style.left =
-            "5px";
-
-        sliderFill.style.width =
-            "0px";
-
-        currentX = 0;
-    }
-}
 
 </script>
 
