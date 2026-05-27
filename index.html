@@ -3,349 +3,482 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Vibrate Every Slide</title>
-
+<title>Swipe Slider</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-body{
-    margin:0;
-    height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    background:#111827;
-    font-family:Arial;
-}
+  :root {
+    --track-bg: #1a1a2e;
+    --track-fill: #e94560;
+    --thumb-bg: #ffffff;
+    --thumb-size: 60px;
+    --track-h: 68px;
+    --track-w: 340px;
+    --accent: #e94560;
+    --accent2: #f5a623;
+    --text: #ffffff;
+    --subtext: rgba(255,255,255,0.5);
+  }
 
-.wrapper{
-    width:400px;
-    padding:30px;
-    background:#1f2937;
-    border-radius:20px;
-}
+  body {
+    min-height: 100vh;
+    background: #0f0f1a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+    gap: 48px;
+  }
 
-.slider{
-    position:relative;
-    height:70px;
-    background:#374151;
-    border-radius:50px;
-    overflow:hidden;
-}
+  .bg-circle {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.15;
+    pointer-events: none;
+  }
+  .bg-circle-1 { width: 400px; height: 400px; background: #e94560; top: -100px; left: -100px; }
+  .bg-circle-2 { width: 300px; height: 300px; background: #4361ee; bottom: -80px; right: -80px; }
 
-.fill{
-    position:absolute;
-    left:0;
-    top:0;
-    height:100%;
-    width:0;
-    background:#6322c5;
-}
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.5px;
+    text-align: center;
+  }
 
-.text{
-    position:absolute;
-    width:100%;
-    height:100%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    color:white;
-    z-index:2;
-    pointer-events:none;
-}
+  h1 span { color: var(--accent); }
 
-.btn{
-    position:absolute;
-    top:5px;
-    left:5px;
-    width:60px;
-    height:60px;
-    border-radius:50%;
-    background:white;
-    z-index:3;
-    cursor:pointer;
+  .sliders-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    align-items: center;
+  }
 
-    display:flex;
-    justify-content:center;
-    align-items:center;
+  .slider-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 28px 32px;
+    width: 420px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
 
-    font-size:24px;
-    font-weight:bold;
-}
+  .slider-label {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--subtext);
+  }
 
-.success{
-    margin-top:20px;
-    text-align:center;
-    color:#22c55e;
-    display:none;
-}
+  .slider-value-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
 
+  .slider-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--text);
+    transition: color 0.2s;
+  }
+
+  .slider-unit {
+    font-size: 14px;
+    color: var(--subtext);
+    font-weight: 300;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(233,69,96,0.3);
+    cursor: pointer;
+    transition: box-shadow 0.2s, transform 0.15s;
+  }
+
+  input[type=range]::-webkit-slider-thumb:active {
+    transform: scale(1.25);
+    box-shadow: 0 0 0 8px rgba(233,69,96,0.2);
+  }
+
+  input[type=range]::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+  }
+
+  .complete-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(233,69,96,0.15);
+    color: var(--accent);
+    border: 1px solid rgba(233,69,96,0.3);
+    opacity: 0;
+    transform: scale(0.85);
+    transition: opacity 0.3s, transform 0.3s;
+  }
+
+  .complete-badge.show {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; animation: pulse 1s infinite; }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .swipe-slider-wrap {
+    position: relative;
+    width: 340px;
+    height: 68px;
+    user-select: none;
+  }
+
+  .swipe-track {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.07);
+    border-radius: 34px;
+    border: 1px solid rgba(255,255,255,0.1);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    padding-left: 4px;
+  }
+
+  .swipe-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: linear-gradient(90deg, #e94560, #f5a623);
+    border-radius: 34px;
+    width: 60px;
+    transition: none;
+    opacity: 0.7;
+  }
+
+  .swipe-thumb {
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    z-index: 2;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    transition: box-shadow 0.2s;
+    touch-action: none;
+  }
+
+  .swipe-thumb:active { cursor: grabbing; }
+
+  .swipe-thumb svg {
+    width: 24px;
+    height: 24px;
+    transition: transform 0.2s;
+  }
+
+  .swipe-hint {
+    position: absolute;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.4);
+    pointer-events: none;
+    letter-spacing: 0.5px;
+    transition: opacity 0.3s;
+  }
+
+  .swipe-slider-wrap.completed .swipe-thumb { background: #e94560; }
+  .swipe-slider-wrap.completed .swipe-thumb svg path { stroke: #fff; }
+  .swipe-slider-wrap.completed .swipe-hint { opacity: 0; }
+
+  .ripple-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(233,69,96,0.3);
+    transform: scale(0);
+    animation: ripple-anim 0.6s ease-out forwards;
+  }
+
+  @keyframes ripple-anim {
+    to { transform: scale(6); opacity: 0; }
+  }
+
+  .flash {
+    position: fixed;
+    inset: 0;
+    background: rgba(233,69,96,0.08);
+    pointer-events: none;
+    z-index: 998;
+    opacity: 0;
+    transition: opacity 0.1s;
+  }
+
+  .flash.active { opacity: 1; }
 </style>
 </head>
-
 <body>
 
-<div class="wrapper">
+<div class="bg-circle bg-circle-1"></div>
+<div class="bg-circle bg-circle-2"></div>
+<div class="ripple-container" id="rippleContainer"></div>
+<div class="flash" id="flash"></div>
 
-    <div class="slider" id="slider">
+<h1>Swipe <span>&amp;</span> Slide</h1>
 
-        <div class="fill" id="fill"></div>
+<div class="sliders-wrap">
 
-        <div class="text" id="text">
-            Slide To Verify
-        </div>
-
-        <div class="btn" id="btn">
-            »
-        </div>
-
+  <!-- Range Slider 1 -->
+  <div class="slider-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span class="slider-label">Volume</span>
+      <span class="complete-badge" id="badge1"><span class="dot"></span> Max reached</span>
     </div>
-
-    <div class="success" id="success">
-        Verified Successfully ✅
+    <div class="slider-value-row">
+      <span class="slider-value" id="val1">50</span>
+      <span class="slider-unit">%</span>
     </div>
+    <input type="range" id="range1" min="0" max="100" value="50"
+      style="background: linear-gradient(to right, #e94560 50%, rgba(255,255,255,0.12) 50%)">
+  </div>
+
+  <!-- Range Slider 2 -->
+  <div class="slider-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span class="slider-label">Brightness</span>
+      <span class="complete-badge" id="badge2"><span class="dot"></span> Max reached</span>
+    </div>
+    <div class="slider-value-row">
+      <span class="slider-value" id="val2">30</span>
+      <span class="slider-unit">lx</span>
+    </div>
+    <input type="range" id="range2" min="0" max="100" value="30"
+      style="background: linear-gradient(to right, #f5a623 30%, rgba(255,255,255,0.12) 30%)">
+  </div>
+
+  <!-- Swipe-to-confirm slider -->
+  <div class="slider-card">
+    <span class="slider-label">Swipe to confirm</span>
+    <div class="swipe-slider-wrap" id="swipeSlider">
+      <div class="swipe-track">
+        <div class="swipe-fill" id="swipeFill"></div>
+        <div class="swipe-thumb" id="swipeThumb">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 12H19M13 6L19 12L13 18" stroke="#e94560" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="swipe-hint">Swipe right to confirm →</span>
+      </div>
+    </div>
+  </div>
 
 </div>
 
 <script>
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
 
-// ===================================
-// ELEMENTS
-// ===================================
-
-const slider =
-    document.getElementById("slider");
-
-const btn =
-    document.getElementById("btn");
-
-const fill =
-    document.getElementById("fill");
-
-const text =
-    document.getElementById("text");
-
-const success =
-    document.getElementById("success");
-
-// ===================================
-// AUDIO
-// ===================================
-
-let audioContext;
-
-function initAudio(){
-
-    if(!audioContext){
-
-        audioContext =
-            new (
-                window.AudioContext ||
-                window.webkitAudioContext
-            )();
-    }
-
-    if(audioContext.state === "suspended"){
-
-        audioContext.resume();
-    }
+function beep(freq = 880, duration = 0.18, type = 'sine') {
+  try {
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    gain.gain.setValueAtTime(0.4, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + duration);
+  } catch(e) {}
 }
 
-function beep(freq = 300){
-
-    if(!audioContext) return;
-
-    const oscillator =
-        audioContext.createOscillator();
-
-    const gainNode =
-        audioContext.createGain();
-
-    oscillator.frequency.value =
-        freq;
-
-    oscillator.type = "sine";
-
-    gainNode.gain.value = 0.05;
-
-    oscillator.connect(gainNode);
-
-    gainNode.connect(
-        audioContext.destination
-    );
-
-    oscillator.start();
-
-    oscillator.stop(
-        audioContext.currentTime + 0.05
-    );
+function completeBeep() {
+  beep(660, 0.1, 'sine');
+  setTimeout(() => beep(880, 0.15, 'sine'), 110);
+  setTimeout(() => beep(1100, 0.2, 'sine'), 230);
 }
 
-// ===================================
-// VIBRATION
-// ===================================
+function vibrate(pattern) {
+  if (navigator.vibrate) navigator.vibrate(pattern);
+}
 
-function vibrate(ms = 20){
+function triggerFlash() {
+  const flash = document.getElementById('flash');
+  flash.classList.add('active');
+  setTimeout(() => flash.classList.remove('active'), 180);
+}
 
-    if(navigator.vibrate){
+function triggerRipple(x, y) {
+  const c = document.getElementById('rippleContainer');
+  const r = document.createElement('div');
+  r.className = 'ripple';
+  const size = 80;
+  r.style.cssText = `width:${size}px;height:${size}px;left:${x - size/2}px;top:${y - size/2}px`;
+  c.appendChild(r);
+  setTimeout(() => r.remove(), 700);
+}
 
-        navigator.vibrate(ms);
+function onComplete(sliderEl, event) {
+  const rect = sliderEl.getBoundingClientRect();
+  triggerRipple(rect.left + rect.width / 2, rect.top + rect.height / 2);
+  triggerFlash();
+  completeBeep();
+  vibrate([30, 20, 80]);
+}
+
+// Range sliders
+function setupRange(id, valId, badgeId, color) {
+  const el = document.getElementById(id);
+  const val = document.getElementById(valId);
+  const badge = document.getElementById(badgeId);
+  let wasMax = false;
+
+  el.addEventListener('input', () => {
+    const v = el.value;
+    val.textContent = v;
+    const pct = (v - el.min) / (el.max - el.min) * 100;
+    el.style.background = `linear-gradient(to right, ${color} ${pct}%, rgba(255,255,255,0.12) ${pct}%)`;
+
+    if (parseInt(v) === parseInt(el.max) && !wasMax) {
+      wasMax = true;
+      badge.classList.add('show');
+      onComplete(el, null);
+    } else if (parseInt(v) < parseInt(el.max)) {
+      wasMax = false;
+      badge.classList.remove('show');
     }
+  });
 }
 
-// ===================================
-// DRAG
-// ===================================
+setupRange('range1', 'val1', 'badge1', '#e94560');
+setupRange('range2', 'val2', 'badge2', '#f5a623');
 
-let dragging = false;
+// Swipe slider
+const swipeSlider = document.getElementById('swipeSlider');
+const swipeThumb = document.getElementById('swipeThumb');
+const swipeFill = document.getElementById('swipeFill');
+const trackWidth = 340;
+const thumbSize = 60;
+const maxX = trackWidth - thumbSize - 8;
+let isDragging = false;
 let startX = 0;
 let currentX = 0;
+let completed = false;
 
-let lastEffect = 0;
-
-const maxMove =
-    slider.offsetWidth -
-    btn.offsetWidth - 10;
-
-// ===================================
-// START
-// ===================================
-
-function startDrag(e){
-
-    dragging = true;
-
-    initAudio();
-
-    vibrate(50);
-
-    startX =
-        e.type.includes("mouse")
-        ? e.clientX
-        : e.touches[0].clientX;
+function setThumbPos(x) {
+  x = Math.max(0, Math.min(x, maxX));
+  swipeThumb.style.left = (4 + x) + 'px';
+  swipeFill.style.width = (thumbSize + x) + 'px';
+  currentX = x;
 }
 
-btn.addEventListener(
-    "mousedown",
-    startDrag
-);
-
-btn.addEventListener(
-    "touchstart",
-    startDrag
-);
-
-// ===================================
-// MOVE
-// ===================================
-
-function moveDrag(e){
-
-    if(!dragging) return;
-
-    const clientX =
-        e.type.includes("mouse")
-        ? e.clientX
-        : e.touches[0].clientX;
-
-    currentX =
-        clientX - startX;
-
-    if(currentX < 0){
-        currentX = 0;
-    }
-
-    if(currentX > maxMove){
-        currentX = maxMove;
-    }
-
-    btn.style.left =
-        currentX + "px";
-
-    fill.style.width =
-        (currentX + 60) + "px";
-
-    // ===================================
-    // EVERY SLIDE EFFECT
-    // ===================================
-
-    const now = Date.now();
-
-    if(now - lastEffect > 80){
-
-        lastEffect = now;
-
-        vibrate(15);
-
-        beep(200 + currentX);
-    }
-
-    // ===================================
-    // SUCCESS
-    // ===================================
-
-    if(currentX >= maxMove){
-
-        dragging = false;
-
-        text.innerHTML =
-            "Verified";
-
-        success.style.display =
-            "block";
-
-        btn.style.background =
-            "#22c55e";
-
-        vibrate(1000);
-
-        beep(700);
-    }
+function startDrag(clientX) {
+  if (completed) return;
+  isDragging = true;
+  startX = clientX - currentX;
+  swipeThumb.style.transition = 'none';
+  swipeFill.style.transition = 'none';
 }
 
-document.addEventListener(
-    "mousemove",
-    moveDrag
-);
-
-document.addEventListener(
-    "touchmove",
-    moveDrag
-);
-
-// ===================================
-// END
-// ===================================
-
-function endDrag(){
-
-    if(!dragging) return;
-
-    dragging = false;
-
-    if(currentX < maxMove){
-
-        btn.style.left =
-            "5px";
-
-        fill.style.width =
-            "0px";
-
-        currentX = 0;
-    }
+function moveDrag(clientX) {
+  if (!isDragging) return;
+  setThumbPos(clientX - startX);
 }
 
-document.addEventListener(
-    "mouseup",
-    endDrag
-);
+function endDrag() {
+  if (!isDragging) return;
+  isDragging = false;
+  if (currentX >= maxX * 0.92) {
+    setThumbPos(maxX);
+    completeSwipe();
+  } else {
+    swipeThumb.style.transition = 'left 0.3s cubic-bezier(.25,.8,.25,1)';
+    swipeFill.style.transition = 'width 0.3s cubic-bezier(.25,.8,.25,1)';
+    setThumbPos(0);
+  }
+}
 
-document.addEventListener(
-    "touchend",
-    endDrag
-);
+function completeSwipe() {
+  completed = true;
+  swipeSlider.classList.add('completed');
+  document.querySelector('#swipeSlider .swipe-hint').textContent = '✓ Confirmed!';
+  document.querySelector('#swipeSlider .swipe-hint').style.opacity = '1';
+  document.querySelector('#swipeSlider .swipe-hint').style.color = 'rgba(255,255,255,0.7)';
+  onComplete(swipeSlider, null);
+  setTimeout(() => {
+    completed = false;
+    swipeSlider.classList.remove('completed');
+    swipeThumb.style.transition = 'left 0.4s cubic-bezier(.25,.8,.25,1)';
+    swipeFill.style.transition = 'width 0.4s cubic-bezier(.25,.8,.25,1)';
+    setThumbPos(0);
+    document.querySelector('#swipeSlider .swipe-hint').textContent = 'Swipe right to confirm →';
+    document.querySelector('#swipeSlider .swipe-hint').style.opacity = '';
+    document.querySelector('#swipeSlider .swipe-hint').style.color = '';
+    swipeThumb.querySelector('path').setAttribute('stroke', '#e94560');
+  }, 2000);
+}
 
+swipeThumb.addEventListener('mousedown', e => { e.preventDefault(); startDrag(e.clientX); });
+document.addEventListener('mousemove', e => moveDrag(e.clientX));
+document.addEventListener('mouseup', endDrag);
+
+swipeThumb.addEventListener('touchstart', e => { e.preventDefault(); startDrag(e.touches[0].clientX); }, { passive: false });
+document.addEventListener('touchmove', e => { if (isDragging) { e.preventDefault(); moveDrag(e.touches[0].clientX); } }, { passive: false });
+document.addEventListener('touchend', endDrag);
 </script>
-
 </body>
 </html>
