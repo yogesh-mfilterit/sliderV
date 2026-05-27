@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Slider Verify</title>
+<title>Vibrate Every Slide</title>
 
 <style>
 
@@ -47,8 +47,8 @@ body{
     width:100%;
     height:100%;
     display:flex;
-    align-items:center;
     justify-content:center;
+    align-items:center;
     color:white;
     z-index:2;
     pointer-events:none;
@@ -66,17 +66,17 @@ body{
     cursor:pointer;
 
     display:flex;
-    align-items:center;
     justify-content:center;
+    align-items:center;
 
     font-size:24px;
     font-weight:bold;
 }
 
 .success{
-    color:#22c55e;
     margin-top:20px;
     text-align:center;
+    color:#22c55e;
     display:none;
 }
 
@@ -109,9 +109,9 @@ body{
 
 <script>
 
-// =====================================
+// ===================================
 // ELEMENTS
-// =====================================
+// ===================================
 
 const slider =
     document.getElementById("slider");
@@ -128,11 +128,11 @@ const text =
 const success =
     document.getElementById("success");
 
-// =====================================
-// AUDIO SETUP
-// =====================================
+// ===================================
+// AUDIO
+// ===================================
 
-let audioContext = null;
+let audioContext;
 
 function initAudio(){
 
@@ -151,7 +151,7 @@ function initAudio(){
     }
 }
 
-function playBeep(){
+function beep(freq = 300){
 
     if(!audioContext) return;
 
@@ -161,11 +161,12 @@ function playBeep(){
     const gainNode =
         audioContext.createGain();
 
+    oscillator.frequency.value =
+        freq;
+
     oscillator.type = "sine";
 
-    oscillator.frequency.value = 500;
-
-    gainNode.gain.value = 0.1;
+    gainNode.gain.value = 0.05;
 
     oscillator.connect(gainNode);
 
@@ -176,50 +177,39 @@ function playBeep(){
     oscillator.start();
 
     oscillator.stop(
-        audioContext.currentTime + 0.5
+        audioContext.currentTime + 0.05
     );
 }
 
-// =====================================
-// VIBRATE
-// =====================================
+// ===================================
+// VIBRATION
+// ===================================
 
-function vibrate(ms = 1000){
+function vibrate(ms = 20){
 
-    if(
-        navigator.vibrate
-    ){
+    if(navigator.vibrate){
 
         navigator.vibrate(ms);
-
-        console.log(
-            "vibrate:",
-            ms
-        );
-
-    }else{
-
-        console.log(
-            "vibration unsupported"
-        );
     }
 }
 
-// =====================================
+// ===================================
 // DRAG
-// =====================================
+// ===================================
 
 let dragging = false;
 let startX = 0;
 let currentX = 0;
 
+let lastEffect = 0;
+
 const maxMove =
     slider.offsetWidth -
     btn.offsetWidth - 10;
 
-// =====================================
+// ===================================
 // START
-// =====================================
+// ===================================
 
 function startDrag(e){
 
@@ -227,7 +217,7 @@ function startDrag(e){
 
     initAudio();
 
-    vibrate(100);
+    vibrate(50);
 
     startX =
         e.type.includes("mouse")
@@ -245,9 +235,9 @@ btn.addEventListener(
     startDrag
 );
 
-// =====================================
+// ===================================
 // MOVE
-// =====================================
+// ===================================
 
 function moveDrag(e){
 
@@ -275,9 +265,24 @@ function moveDrag(e){
     fill.style.width =
         (currentX + 60) + "px";
 
-    // =================================
+    // ===================================
+    // EVERY SLIDE EFFECT
+    // ===================================
+
+    const now = Date.now();
+
+    if(now - lastEffect > 80){
+
+        lastEffect = now;
+
+        vibrate(15);
+
+        beep(200 + currentX);
+    }
+
+    // ===================================
     // SUCCESS
-    // =================================
+    // ===================================
 
     if(currentX >= maxMove){
 
@@ -292,12 +297,9 @@ function moveDrag(e){
         btn.style.background =
             "#22c55e";
 
-        // IMPORTANT:
-        // vibration only on success
-
         vibrate(1000);
 
-        playBeep();
+        beep(700);
     }
 }
 
@@ -311,9 +313,9 @@ document.addEventListener(
     moveDrag
 );
 
-// =====================================
+// ===================================
 // END
-// =====================================
+// ===================================
 
 function endDrag(){
 
